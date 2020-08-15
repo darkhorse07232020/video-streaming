@@ -1,0 +1,38 @@
+<html>
+<head>
+    <title>Streamer</title>
+</head>
+<body>
+    <video autoplay></video>
+    <script>
+        // get video dom element
+        const video = document.querySelector('video');
+        
+        // request access to webcam
+        navigator.mediaDevices.getUserMedia({video: {width: 426, height: 240}}).then((stream) => video.srcObject = stream);
+        
+        // returns a frame encoded in base64
+        const getFrame = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/png');
+            return data;
+        }
+        // const WS_URL = location.origin.replace(/^http/, 'ws');
+        const WS_URL = 'ws://192.168.107.136:3001';
+        console.log(WS_URL)
+        const FPS = 12;
+        const ws = new WebSocket(WS_URL);
+        ws.onopen = () => {
+            console.log(`Connected to ${WS_URL}`);
+            setInterval(() => {
+                console.log(JSON.stringify({data: getFrame()}));
+                // ws.send(JSON.stringify({data: getFrame()}))
+                ws.send(getFrame());
+            }, 1000 / FPS);
+        }
+    </script>
+</body>
+</html>
