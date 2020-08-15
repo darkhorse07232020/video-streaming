@@ -20,17 +20,14 @@
             const data = canvas.toDataURL('image/png');
             return data;
         }
-        // const WS_URL = location.origin.replace(/^http/, 'ws');
-        const WS_URL = 'ws://192.168.107.136:3001';
-        console.log(WS_URL)
+        const WS_URL = 'ws://192.168.107.136:8090/wsout';
+
         const FPS = 12;
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => {
             console.log(`Connected to ${WS_URL}`);
             setInterval(() => {
-                console.log(JSON.stringify({data: getFrame()}));
-                // ws.send(JSON.stringify({data: getFrame()}))
-                ws.send(getFrame());
+                ws.send(JSON.stringify({data: getFrame()}));
             }, 1000 / FPS);
         }
     </script>

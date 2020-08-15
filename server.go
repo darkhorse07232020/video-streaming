@@ -48,12 +48,13 @@ func handleRecievers(w http.ResponseWriter, r *http.Request) {
 
 		log.Fatal("in receeiver", err)
 	}
-	// Make sure we close the connection when the function returns
-	defer ws.Close()
 
 	// Register our new client
 	clientReceivers[ws] = true
 	log.Printf("receiver conneceted")
+
+	// // Make sure we close the connection when the function returns
+	// defer ws.Close()
 }
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +64,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Make sure we close the connection when the function returns
-	defer ws.Close()
 
 	// Register our new client
 	clientSenders[ws] = true
@@ -81,12 +80,16 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		// Send the newly received message to the broadcast channel
 		broadcast <- msg
 	}
+
+	// // Make sure we close the connection when the function returns
+	// defer ws.Close()
 }
 
 func handleMessages() {
 	for {
 		// Grab the next message from the broadcast channel
 		msg := <-broadcast
+
 		// Send it out to every client that is currently connected
 		for client := range clientReceivers {
 			log.Println("sending message: ")
