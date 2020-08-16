@@ -8,23 +8,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Define our message object
-type Message struct {
-	Data string `json:"data"`
-}
-
 var clientSenders = make(map[*websocket.Conn]bool) // connected clients
 var clientReceivers = make(map[*websocket.Conn]bool)
-var broadcast = make(chan Message) // broadcast channel
+var broadcast = make(chan []byte) // broadcast channel
 
-// Configure the upgrader
-// :CheckOrigin: func(r *http.Request) bool {
-// 	return true
-// }
-
-var upgrader = websocket.Upgrader{}
-
-// upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func hello(w http.ResponseWriter, req *http.Request) {
 
@@ -54,7 +45,6 @@ func handleRecievers(w http.ResponseWriter, r *http.Request) {
 	log.Printf("receiver conneceted")
 
 	// // Make sure we close the connection when the function returns
-	// defer ws.Close()
 }
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -69,32 +59,29 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	clientSenders[ws] = true
 
 	for {
-		var msg Message
 		// Read in a new message as JSON and map it to a Message object
-		err := ws.ReadJSON(&msg)
+		_, p, err := ws.ReadMessage()
 		if err != nil {
 			log.Printf("error: %v", err)
+			ws.Close()
 			delete(clientSenders, ws)
 			break
 		}
 		// Send the newly received message to the broadcast channel
-		broadcast <- msg
+		broadcast <- p
 	}
 
 	// // Make sure we close the connection when the function returns
-	// defer ws.Close()
 }
 
 func handleMessages() {
 	for {
 		// Grab the next message from the broadcast channel
-		msg := <-broadcast
+		p := <-broadcast
 
 		// Send it out to every client that is currently connected
 		for client := range clientReceivers {
-			log.Println("sending message: ")
-			err := client.WriteJSON(msg)
-			if err != nil {
+			if err := client.WriteMessage(1, p); err != nil {
 				log.Printf("error sending message: %v", err)
 				client.Close()
 				delete(clientReceivers, client)

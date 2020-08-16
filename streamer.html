@@ -24,10 +24,10 @@
 
         const FPS = 12;
         const ws = new WebSocket(WS_URL);
+
         ws.onopen = () => {
-            console.log(`Connected to ${WS_URL}`);
             setInterval(() => {
-                ws.send(JSON.stringify({data: getFrame()}));
+                ws.send(getFrame());
             }, 1000 / FPS);
         }
     </script>
